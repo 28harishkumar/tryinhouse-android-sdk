@@ -1,0 +1,65 @@
+package com.inhouse.client
+
+import androidx.annotation.NonNull
+import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.plugin.common.MethodCall
+import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.MethodChannel.MethodCallHandler
+import io.flutter.plugin.common.MethodChannel.Result
+
+class TrackingSDKPlugin : FlutterPlugin, MethodCallHandler {
+
+    private var channel: MethodChannel? = null
+
+    override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+        channel = MethodChannel(flutterPluginBinding.binaryMessenger, "tracking_sdk")
+        channel?.setMethodCallHandler(this)
+    }
+
+    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+        when (call.method) {
+            "initialize" -> {
+                val projectToken = call.argument<String>("projectToken")
+                val shortLinkDomain = call.argument<String>("shortLinkDomain")
+                val serverUrl = call.argument<String>("serverUrl")
+                val enableDebugLogging = call.argument<Boolean>("enableDebugLogging") ?: false
+
+                if (projectToken != null && shortLinkDomain != null) {
+                    TrackingSDK.getInstance().initialize(
+                        context = flutterPluginBinding.applicationContext,
+                        projectToken = projectToken,
+                        shortLinkDomain = shortLinkDomain,
+                        serverUrl = serverUrl ?: "https://your-api-server.com",
+                        enableDebugLogging = enableDebugLogging
+                    )
+                    result.success(null)
+                } else {
+                    result.error("INVALID_ARGUMENTS", "Missing required arguments", null)
+                }
+            }
+            "trackAppOpen" -> {
+                val shortLink = call.argument<String>("shortLink")
+                TrackingSDK.getInstance().trackAppOpen(shortLink)
+                result.success(null)
+            }
+            "trackSessionStart" -> {
+                val shortLink = call.argument<String>("shortLink")
+                TrackingSDK.getInstance().trackSessionStart(shortLink)
+                result.success(null)
+            }
+            "trackShortLinkClick" -> {
+                val shortLink = call.argument<String>("shortLink")
+                val deepLink = call.argument<String>("deepLink")
+                if (shortLink != null) {
+                    TrackingSDK.getInstance().trackShortLinkClick(shortLink, deepLink)
+                }
+                result.success(null)
+            }
+            else -> result.notImplemented()
+        }
+    }
+
+    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        channel?.setMethodCallHandler(null)
+    }
+}
