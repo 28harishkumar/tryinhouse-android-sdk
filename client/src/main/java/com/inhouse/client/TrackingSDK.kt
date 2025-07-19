@@ -128,41 +128,6 @@ class TrackingSDK private constructor() {
         storage.setFirstInstallComplete()
     }
 
-    private fun checkForShortLinkOpen() {
-        Log.d("TrackingSDK", "checkForShortLinkOpen called")
-        val activity = getCurrentActivity() ?: run {
-            Log.e("TrackingSDK", "Current activity is null in checkForShortLinkOpen")
-            return
-        }
-        val intent = activity.intent
-
-        if (intent?.action == Intent.ACTION_VIEW) {
-            val data = intent.data
-            Log.d("TrackingSDK", "Intent.ACTION_VIEW data is: $data")
-            if (data != null && shortLinkDetector?.isShortLink(data.toString()) == true) {
-                val shortLink = data.toString()
-                Log.d("TrackingSDK", "App opened from shortlink: $shortLink")
-                // Track shortlink click
-                trackShortLinkClick(shortLink, data.toString()) { responseJson ->
-                    Log.d("TrackingSDK", "Shortlink click callback triggered: $responseJson")
-                    sdkCallback?.invoke("shortlink_click", responseJson)
-                }
-                // Track app open from shortlink
-                trackAppOpenFromShortLink(shortLink) { responseJson ->
-                    Log.d("TrackingSDK", "App open from shortlink callback triggered: $responseJson")
-                    sdkCallback?.invoke("app_open_from_shortlink", responseJson)
-                }
-                // Track session start from shortlink
-                trackSessionStartFromShortLink(shortLink) { responseJson ->
-                    Log.d("TrackingSDK", "Session start from shortlink callback triggered: $responseJson")
-                    sdkCallback?.invoke("session_start_from_shortlink", responseJson)
-                }
-            } else {
-                Log.d("TrackingSDK", "Intent data is not a recognized shortlink")
-            }
-        }
-    }
-
     // Public tracking methods
     fun trackAppOpen(shortLink: String? = null, callback: ((String) -> Unit)? = null) {
         Log.d("TrackingSDK", "trackAppOpen called with shortLink=$shortLink")
@@ -223,6 +188,68 @@ class TrackingSDK private constructor() {
     fun setCurrentActivity(activity: Activity?) {
         Log.d("TrackingSDK", "setCurrentActivity called with activity=$activity")
         this.currentActivity = activity
+    }
+
+    /**
+     * Call this method when the app comes to the foreground (onResume)
+     * This will check if the app was opened from a shortlink
+     */
+    fun onAppResume() {
+        Log.d("TrackingSDK", "onAppResume called")
+        checkForShortLinkOpen(isAppResume = true)
+    }
+
+    fun onNewIntent(intent: Intent?) {
+        Log.d("TrackingSDK", "onNewIntent called with intent: $intent")
+        // Check for shortlink in the new intent
+        checkForShortLinkOpen(intent = intent, isAppResume = true)
+    }
+
+    /**
+     * Check for shortlinks in the current activity's intent
+     * This is called both during initialization and when app comes to foreground
+     */
+    private fun checkForShortLinkOpen(intent: Intent? = null, isAppResume: Boolean = false) {
+        Log.d("TrackingSDK", "checkForShortLinkOpen called with isAppResume=$isAppResume")
+        val activity = getCurrentActivity() ?: run {
+            Log.e("TrackingSDK", "Current activity is null in checkForShortLinkOpen")
+            return
+        }
+        val useIntent = intent ?: activity.intent
+
+        Log.d("TrackingSDK", "Intent action: ${useIntent?.action}")
+        Log.d("TrackingSDK", "New Intent data: ${useIntent?.data}")
+        
+        // Check for shortlink data regardless of action
+        val data = useIntent?.data
+        if (data != null && shortLinkDetector?.isShortLink(data.toString()) == true) {
+            val shortLink = data.toString()
+            Log.d("TrackingSDK", "App opened from shortlink: $shortLink")
+            
+            if (isAppResume) {
+                // When app comes to foreground, only track app open
+                trackAppOpenFromShortLink(shortLink) { responseJson ->
+                    Log.d("TrackingSDK", "App open from shortlink callback triggered (resume): $responseJson")
+                    sdkCallback?.invoke("shortlink_click", responseJson)
+                }
+            } else {
+                // When app is first opened, track all events
+                trackShortLinkClick(shortLink, data.toString()) { responseJson ->
+                    Log.d("TrackingSDK", "Shortlink click callback triggered: $responseJson")
+                    sdkCallback?.invoke("shortlink_click", responseJson)
+                }
+                // trackAppOpenFromShortLink(shortLink) { responseJson ->
+                //     Log.d("TrackingSDK", "App open from shortlink callback triggered: $responseJson")
+                //     sdkCallback?.invoke("app_open_from_shortlink", responseJson)
+                // }
+                trackSessionStartFromShortLink(shortLink) { responseJson ->
+                    Log.d("TrackingSDK", "Session start from shortlink callback triggered: $responseJson")
+                    sdkCallback?.invoke("session_start_from_shortlink", responseJson)
+                }
+            }
+        } else {
+            Log.d("TrackingSDK", "No shortlink data found in intent")
+        }
     }
 
     private fun getCurrentActivity(): Activity? {
