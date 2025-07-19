@@ -29,12 +29,12 @@ class InstallReferrerManager(
                                 callback(null)
                             }
                         } catch (e: Exception) {
-                            Log.e("InstallReferrerManager", "Error getting install referrer", e)
+                            Log.e("TrackingSDK", "Error getting install referrer", e)
                             callback(null)
                         }
                     }
                     else -> {
-                        Log.e("InstallReferrerManager", "Install referrer setup failed: $responseCode")
+                        Log.e("TrackingSDK", "Install referrer setup failed: $responseCode")
                         callback(null)
                     }
                 }
@@ -42,7 +42,7 @@ class InstallReferrerManager(
             }
 
             override fun onInstallReferrerServiceDisconnected() {
-                Log.w("InstallReferrerManager", "Install referrer service disconnected")
+                Log.w("TrackingSDK", "Install referrer service disconnected")
                 callback(null)
             }
         })

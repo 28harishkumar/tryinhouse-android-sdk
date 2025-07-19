@@ -259,4 +259,30 @@ class TrackingSDK private constructor() {
     fun getSessionId(): String = _sessionId
 
     fun getDeviceId(): String = storageManager?.getDeviceId() ?: ""
+
+    /**
+    * Returns the stored install referrer string, or null if not available.
+    */
+    fun getInstallReferrer(): String? {
+        return storageManager?.getInstallReferrer()
+    }
+
+    /**
+    * Fetches the install referrer from the Play Store API (async).
+    * Calls the callback with the referrer string or null.
+    */
+    fun fetchInstallReferrer(callback: (String?) -> Unit) {
+        val ctx = context ?: run {
+            Log.e("TrackingSDK", "Context is null in fetchInstallReferrer")
+            callback(null)
+            return
+        }
+        val sm = storageManager ?: run {
+            Log.e("TrackingSDK", "StorageManager is null in fetchInstallReferrer")
+            callback(null)
+            return
+        }
+        val irm = InstallReferrerManager(ctx, sm)
+        irm.getInstallReferrer(callback)
+    }
 }
