@@ -24,9 +24,7 @@ class NetworkClient(private val config: SDKConfig) {
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
 
-    private val gson = GsonBuilder()
-        .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-        .create()
+    private val gson = Gson()
 
     suspend fun sendEvent(event: Event): String = withContext(Dispatchers.IO) {
         try {

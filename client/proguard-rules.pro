@@ -1,5 +1,5 @@
 # Keep all public classes and methods in the tracking SDK
--keep public class com.inhose.client.** { *; }
+-keep public class com.inhouse.client.** { *; }
 
 # Keep Gson classes
 -keep class com.google.gson.** { *; }
@@ -7,7 +7,7 @@
 -keep class * extends com.google.gson.reflect.TypeToken
 
 # Keep model classes
--keep class com.inhose.client.models.** { *; }
+-keep class com.inhouse.client.models.** { *; }
 
 # Keep OkHttp
 -keep class okhttp3.** { *; }
