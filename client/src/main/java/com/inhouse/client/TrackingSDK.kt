@@ -123,9 +123,28 @@ class TrackingSDK private constructor() {
             } else {
                 Log.d("TrackingSDK", "No shortlink found in install referrer")
             }
+            storage.setFirstInstallComplete()
+        } else {
+            // Referrer not yet available, fetch it asynchronously
+            fetchInstallReferrer { referrer ->
+                if (referrer != null) {
+                    Log.d("TrackingSDK", "Install referrer fetched async: $referrer")
+                    val shortLink = shortLinkDetector?.extractShortLink(referrer)
+                    if (shortLink != null) {
+                        Log.d("TrackingSDK", "Shortlink extracted from install referrer (async): $shortLink")
+                        trackAppInstallFromShortLink(shortLink) { responseJson ->
+                            Log.d("TrackingSDK", "App install from shortlink callback triggered (async): $responseJson")
+                            sdkCallback?.invoke("app_install_from_shortlink", responseJson)
+                        }
+                    } else {
+                        Log.d("TrackingSDK", "No shortlink found in install referrer (async)")
+                    }
+                } else {
+                    Log.d("TrackingSDK", "No install referrer available after async fetch")
+                }
+                storage.setFirstInstallComplete()
+            }
         }
-
-        storage.setFirstInstallComplete()
     }
 
     // Public tracking methods
