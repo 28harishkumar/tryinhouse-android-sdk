@@ -1,4 +1,4 @@
-package com.inhouse.client.models
+package co.tryinhouse.android.models
 
 import com.google.gson.annotations.SerializedName
 import androidx.annotation.Keep

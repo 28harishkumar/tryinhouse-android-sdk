@@ -1,0 +1,28 @@
+# sdk building
+./gradlew :client:publishToMavenLocal
+
+# Signin
+## Generate GPG Key (if you haven't already)
+gpg --gen-key
+
+## Get Your Key ID
+gpg --list-secret-keys
+
+## Export Secret Key
+// Replace YOUR_EMAIL with your actual email
+gpg --export-secret-keys --armor YOUR_EMAIL > ~/.gnupg/secring.gpg
+
+## Update gradle.properties with Real Values
+signingKeyId=ABC123DEF4567890ABCD1234EF567890ABCD1234
+signingPassword=your-actual-gpg-passphrase
+signingSecretKeyRingFile=/Users/harish/.gnupg/secring.gpg
+
+
+# SDK publishing
+./gradlew :client:publishReleasePublicationToOSSRHRepository
+
+# SDK usage
+// build.gradle.kts
+dependencies {
+    implementation("co.tryinhouse.android:sdk:1.0.0")
+}

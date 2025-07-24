@@ -1,12 +1,12 @@
-package com.inhouse.client
+package co.tryinhouse.android
 
 import android.util.Log
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
-import com.inhouse.client.models.Event
-import com.inhouse.client.models.SDKConfig
+import co.tryinhouse.android.models.Event
+import co.tryinhouse.android.models.SDKConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType

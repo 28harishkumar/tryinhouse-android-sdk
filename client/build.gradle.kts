@@ -1,11 +1,13 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.dokka)
     id("maven-publish")
+    id("signing")
 }
 
 android {
-    namespace = "com.inhouse.client"
+    namespace = "co.tryinhouse.android"
     compileSdk = 36
 
     defaultConfig {
@@ -33,6 +35,11 @@ android {
     }
 }
 
+// Dokka configuration
+tasks.dokkaHtml {
+    outputDirectory.set(layout.buildDirectory.dir("dokka"))
+}
+
 dependencies {
 
     implementation(libs.androidx.core.ktx)
@@ -56,9 +63,11 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 }
 
+// Create Javadoc JAR from Dokka output
 val javadocJar by tasks.registering(Jar::class) {
     archiveClassifier.set("javadoc")
-    // Optionally, add files if you generate javadoc/dokka output
+    from(tasks.dokkaHtml.get().outputDirectory)
+    dependsOn(tasks.dokkaHtml)
 }
 
 afterEvaluate {
@@ -67,12 +76,52 @@ afterEvaluate {
             create<MavenPublication>("release") {
                 from(components["release"])
                 artifact(javadocJar.get())
-                groupId = "com.inhouse"
-                artifactId = "client"
+                
+                groupId = "co.tryinhouse.android"
+                artifactId = "sdk"
                 version = "1.0.0"
+                
+                pom {
+                    name.set("TryInhouse Android SDK")
+                    description.set("Android SDK for tracking app installs, app opens, and user interactions with shortlinks")
+                    url.set("https://github.com/your-username/tryinhouse-android-sdk")
+                    
+                    licenses {
+                        license {
+                            name.set("The Apache License, Version 2.0")
+                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        }
+                    }
+                    
+                    developers {
+                        developer {
+                            id.set("focks-chandan")
+                            name.set("Chandan Singha")
+                            email.set("chandan@tryinhouse.co")
+                        }
+                    }
+                    
+                    scm {
+                        connection.set("scm:git:git://github.com/your-username/tryinhouse-android-sdk.git")
+                        developerConnection.set("scm:git:ssh://github.com:your-username/tryinhouse-android-sdk.git")
+                        url.set("https://github.com/your-username/tryinhouse-android-sdk/tree/main")
+                    }
+                }
+            }
+        }
+        
+        repositories {
+            maven {
+                name = "OSSRH"
+                url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+                credentials {
+                    username = project.findProperty("ossrhUsername") as String?
+                    password = project.findProperty("ossrhPassword") as String?
+                }
             }
         }
     }
+    
     tasks.findByName("publishReleasePublicationToMavenLocal")?.let { publishTask ->
         publishTask.dependsOn(tasks.named("releaseSourcesJar"))
         publishTask.dependsOn(javadocJar)
@@ -81,4 +130,14 @@ afterEvaluate {
         metaTask.dependsOn(tasks.named("releaseSourcesJar"))
         metaTask.dependsOn(javadocJar)
     }
+    
+    // Configure signing after publications are created
+    // signing {
+    //     val signingKeyId: String? by project
+    //     val signingPassword: String? by project
+    //     val signingSecretKeyRingFile: String? by project
+        
+    //     useInMemoryPgpKeys(signingKeyId, signingSecretKeyRingFile, signingPassword)
+    //     sign(publishing.publications["release"])
+    // }
 }

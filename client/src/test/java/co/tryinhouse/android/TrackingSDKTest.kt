@@ -1,9 +1,9 @@
-package com.inhouse.client
+package co.tryinhouse.android
 
 import org.junit.Test
 import org.junit.Assert.*
 import org.mockito.Mockito.*
-import com.inhouse.client.models.SDKConfig
+import co.tryinhouse.android.models.SDKConfig
 
 class TrackingSDKTest {
 
@@ -11,14 +11,17 @@ class TrackingSDKTest {
     fun testShortLinkDetection() {
         val detector = ShortLinkDetector("yourdomain.com")
 
+        // Test valid URLs that won't cause exceptions
         assertTrue(detector.isShortLink("https://yourdomain.com/abc123"))
         assertTrue(detector.isShortLink("https://sub.yourdomain.com/abc123"))
         assertFalse(detector.isShortLink("https://otherdomain.com/abc123"))
+        assertFalse(detector.isShortLink("https://completely.different.com/abc123"))
     }
 
     @Test
     fun testEventCreation() {
         val config = SDKConfig(
+            projectId = "test_project_id",
             projectToken = "test_token",
             shortLinkDomain = "test.com"
         )

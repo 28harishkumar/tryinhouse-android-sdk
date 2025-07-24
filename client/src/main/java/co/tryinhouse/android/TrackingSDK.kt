@@ -1,11 +1,11 @@
-package com.inhouse.client
+package co.tryinhouse.android
 
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
-import com.inhouse.client.models.SDKConfig
+import co.tryinhouse.android.models.SDKConfig
 import java.util.UUID
 
 class TrackingSDK private constructor() {

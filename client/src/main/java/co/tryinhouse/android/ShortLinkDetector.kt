@@ -1,4 +1,4 @@
-package com.inhouse.client
+package co.tryinhouse.android
 
 import android.content.Intent
 import android.net.Uri

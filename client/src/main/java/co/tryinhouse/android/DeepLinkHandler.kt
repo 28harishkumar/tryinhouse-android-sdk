@@ -1,9 +1,9 @@
-package com.inhouse.client
+package co.tryinhouse.android
 
 import android.app.Activity
 import android.content.Intent
 import android.util.Log
-import com.inhouse.client.models.SDKConfig
+import co.tryinhouse.android.models.SDKConfig
 
 class DeepLinkHandler(
     private val trackingSDK: TrackingSDK,

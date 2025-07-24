@@ -1,4 +1,4 @@
-package com.inhouse.client
+package co.tryinhouse.android
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

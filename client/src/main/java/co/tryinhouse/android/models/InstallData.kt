@@ -1,4 +1,4 @@
-package com.inhouse.client.models
+package co.tryinhouse.android.models
 
 data class InstallData(
     val shortLink: String,

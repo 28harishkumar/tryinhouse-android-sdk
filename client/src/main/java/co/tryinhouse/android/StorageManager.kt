@@ -1,11 +1,12 @@
-package com.inhouse.client
+package co.tryinhouse.android
 
+import android.util.Log
 import android.content.Context
 import android.content.SharedPreferences
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.inhouse.client.models.Event
-import com.inhouse.client.models.InstallData
+import co.tryinhouse.android.models.Event
+import co.tryinhouse.android.models.InstallData
 import java.util.UUID
 
 class StorageManager(context: Context) {

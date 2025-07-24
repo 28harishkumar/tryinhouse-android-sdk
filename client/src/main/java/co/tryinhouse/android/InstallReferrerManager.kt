@@ -1,4 +1,4 @@
-package com.inhouse.client
+package co.tryinhouse.android
 
 import android.content.Context
 import android.util.Log

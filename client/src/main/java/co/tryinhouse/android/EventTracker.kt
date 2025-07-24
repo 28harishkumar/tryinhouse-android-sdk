@@ -1,9 +1,9 @@
-package com.inhouse.client
+package co.tryinhouse.android
 
 import android.util.Log
-import com.inhouse.client.models.Event
-import com.inhouse.client.models.InstallData
-import com.inhouse.client.models.SDKConfig
+import co.tryinhouse.android.models.Event
+import co.tryinhouse.android.models.InstallData
+import co.tryinhouse.android.models.SDKConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
