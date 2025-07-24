@@ -96,6 +96,8 @@ class TrackingSDK private constructor() {
         if (storage.isFirstInstall()) {
             Log.d("TrackingSDK", "First install detected")
             handleFirstInstall()
+        } else {
+            Log.d("TrackingSDK", "Not first install, skipping first install logic")
         }
 
         // Check if app was opened from a shortlink
@@ -303,5 +305,25 @@ class TrackingSDK private constructor() {
         }
         val irm = InstallReferrerManager(ctx, sm)
         irm.getInstallReferrer(callback)
+    }
+
+    // For testing purposes - reset first install flag
+    fun resetFirstInstall() {
+        Log.d("TrackingSDK", "resetFirstInstall called")
+        val storage = storageManager ?: run {
+            Log.e("TrackingSDK", "StorageManager is null in resetFirstInstall")
+            return
+        }
+        storage.resetFirstInstall()
+    }
+
+    // For debugging - check current first install state
+    fun debugFirstInstallState() {
+        Log.d("TrackingSDK", "debugFirstInstallState called")
+        val storage = storageManager ?: run {
+            Log.e("TrackingSDK", "StorageManager is null in debugFirstInstallState")
+            return
+        }
+        storage.debugFirstInstallState()
     }
 }

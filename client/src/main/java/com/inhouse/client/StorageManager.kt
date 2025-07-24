@@ -31,11 +31,28 @@ class StorageManager(context: Context) {
     }
 
     fun isFirstInstall(): Boolean {
-        return sharedPreferences.getBoolean(KEY_FIRST_INSTALL, true)
+        val isFirst = sharedPreferences.getBoolean(KEY_FIRST_INSTALL, true)
+        val hasKey = sharedPreferences.contains(KEY_FIRST_INSTALL)
+        Log.d("StorageManager", "isFirstInstall() called, hasKey=$hasKey, returning: $isFirst")
+        return isFirst
     }
 
     fun setFirstInstallComplete() {
+        Log.d("StorageManager", "setFirstInstallComplete() called, setting first_install to false")
         sharedPreferences.edit().putBoolean(KEY_FIRST_INSTALL, false).apply()
+    }
+
+    // For testing purposes - reset first install flag
+    fun resetFirstInstall() {
+        Log.d("StorageManager", "resetFirstInstall() called, setting first_install to true")
+        sharedPreferences.edit().putBoolean(KEY_FIRST_INSTALL, true).apply()
+    }
+
+    // For debugging - check current state
+    fun debugFirstInstallState() {
+        val hasKey = sharedPreferences.contains(KEY_FIRST_INSTALL)
+        val value = sharedPreferences.getBoolean(KEY_FIRST_INSTALL, true)
+        Log.d("StorageManager", "DEBUG: first_install key exists=$hasKey, value=$value")
     }
 
     fun storeInstallData(installData: InstallData) {
