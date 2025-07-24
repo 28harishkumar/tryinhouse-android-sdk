@@ -6,6 +6,13 @@ plugins {
     id("signing")
 }
 
+// Set properties from environment variables
+project.ext["ossrhUsername"] = System.getProperty("OSSRH_USERNAME") ?: ""
+project.ext["ossrhPassword"] = System.getProperty("OSSRH_PASSWORD") ?: ""
+project.ext["signingKeyId"] = System.getProperty("SIGNING_KEY_ID") ?: ""
+project.ext["signingPassword"] = System.getProperty("SIGNING_PASSWORD") ?: ""
+project.ext["signingSecretKeyRingFile"] = System.getProperty("SIGNING_SECRET_KEY_RING_FILE") ?: ""
+
 android {
     namespace = "co.tryinhouse.android"
     compileSdk = 36
@@ -84,7 +91,7 @@ afterEvaluate {
                 pom {
                     name.set("TryInhouse Android SDK")
                     description.set("Android SDK for tracking app installs, app opens, and user interactions with shortlinks")
-                    url.set("https://github.com/your-username/tryinhouse-android-sdk")
+                    url.set("https://github.com/28harishkumar/tryinhouse-android-sdk")
                     
                     licenses {
                         license {
@@ -97,14 +104,50 @@ afterEvaluate {
                         developer {
                             id.set("focks-chandan")
                             name.set("Chandan Singha")
-                            email.set("chandan@tryinhouse.co")
+                            email.set("ck@tryinhouse.co")
                         }
                     }
                     
                     scm {
-                        connection.set("scm:git:git://github.com/your-username/tryinhouse-android-sdk.git")
-                        developerConnection.set("scm:git:ssh://github.com:your-username/tryinhouse-android-sdk.git")
-                        url.set("https://github.com/your-username/tryinhouse-android-sdk/tree/main")
+                        connection.set("scm:git:git://github.com/28harishkumar/tryinhouse-android-sdk.git")
+                        developerConnection.set("scm:git:ssh://github.com:28harishkumar/tryinhouse-android-sdk.git")
+                        url.set("https://github.com/28harishkumar/tryinhouse-android-sdk/tree/master")
+                    }
+                }
+            }
+            
+            create<MavenPublication>("snapshot") {
+                from(components["release"])
+                artifact(javadocJar.get())
+                
+                groupId = "co.tryinhouse.android"
+                artifactId = "sdk"
+                version = "1.0.0-SNAPSHOT"
+                
+                pom {
+                    name.set("TryInhouse Android SDK")
+                    description.set("Android SDK for tracking app installs, app opens, and user interactions with shortlinks")
+                    url.set("https://github.com/28harishkumar/tryinhouse-android-sdk")
+                    
+                    licenses {
+                        license {
+                            name.set("The Apache License, Version 2.0")
+                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        }
+                    }
+                    
+                    developers {
+                        developer {
+                            id.set("focks-chandan")
+                            name.set("Chandan Singha")
+                            email.set("ck@tryinhouse.co")
+                        }
+                    }
+                    
+                    scm {
+                        connection.set("scm:git:git://github.com/28harishkumar/tryinhouse-android-sdk.git")
+                        developerConnection.set("scm:git:ssh://github:28harishkumar/tryinhouse-android-sdk.git")
+                        url.set("https://github.com/28harishkumar/tryinhouse-android-sdk/tree/master")
                     }
                 }
             }
@@ -113,7 +156,15 @@ afterEvaluate {
         repositories {
             maven {
                 name = "OSSRH"
-                url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+                url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+                credentials {
+                    username = project.findProperty("ossrhUsername") as String?
+                    password = project.findProperty("ossrhPassword") as String?
+                }
+            }
+            maven {
+                name = "OSSRH-Snapshots"
+                url = uri("https://oss.sonatype.org/content/repositories/snapshots/")
                 credentials {
                     username = project.findProperty("ossrhUsername") as String?
                     password = project.findProperty("ossrhPassword") as String?
@@ -132,12 +183,21 @@ afterEvaluate {
     }
     
     // Configure signing after publications are created
-    // signing {
-    //     val signingKeyId: String? by project
-    //     val signingPassword: String? by project
-    //     val signingSecretKeyRingFile: String? by project
-        
-    //     useInMemoryPgpKeys(signingKeyId, signingSecretKeyRingFile, signingPassword)
-    //     sign(publishing.publications["release"])
-    // }
+    // Only enable signing for production releases
+    if (project.hasProperty("enableSigning") && project.property("enableSigning") == "true") {
+        signing {
+            val signingKeyId: String? by project
+            val signingPassword: String? by project
+            val signingSecretKeyRingFile: String? by project
+            
+            // Use the existing keyring file directly
+            if (signingSecretKeyRingFile != null && signingKeyId != null && signingPassword != null) {
+                useInMemoryPgpKeys(signingKeyId, signingSecretKeyRingFile, signingPassword)
+            } else if (signingKeyId != null && signingPassword != null) {
+                // Fallback to in-memory signing
+                useInMemoryPgpKeys(signingKeyId, signingPassword)
+            }
+            sign(publishing.publications["release"])
+        }
+    }
 }

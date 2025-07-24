@@ -16,3 +16,9 @@ local.properties
 .kotlin/
 .kotlin_module
 .idea
+
+# Environment and security files
+.env
+*.gpg
+*.asc
+secrets/
