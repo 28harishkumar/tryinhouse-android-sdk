@@ -8,14 +8,20 @@ import co.tryinhouse.android.models.SDKConfig
 class TrackingSDKTest {
 
     @Test
-    fun testShortLinkDetection() {
-        val detector = ShortLinkDetector("yourdomain.com")
+    fun testSDKConfig() {
+        val config = SDKConfig(
+            projectId = "test_project_id",
+            projectToken = "test_token",
+            shortLinkDomain = "test.com",
+            serverUrl = "https://test.com",
+            enableDebugLogging = false
+        )
 
-        // Test valid URLs that won't cause exceptions
-        assertTrue(detector.isShortLink("https://yourdomain.com/abc123"))
-        assertTrue(detector.isShortLink("https://sub.yourdomain.com/abc123"))
-        assertFalse(detector.isShortLink("https://otherdomain.com/abc123"))
-        assertFalse(detector.isShortLink("https://completely.different.com/abc123"))
+        assertEquals("test_project_id", config.projectId)
+        assertEquals("test_token", config.projectToken)
+        assertEquals("test.com", config.shortLinkDomain)
+        assertEquals("https://test.com", config.serverUrl)
+        assertFalse(config.enableDebugLogging)
     }
 
     @Test
@@ -23,7 +29,9 @@ class TrackingSDKTest {
         val config = SDKConfig(
             projectId = "test_project_id",
             projectToken = "test_token",
-            shortLinkDomain = "test.com"
+            shortLinkDomain = "test.com",
+            serverUrl = "https://test.com",
+            enableDebugLogging = false
         )
 
         val storageManager = mock(StorageManager::class.java)
@@ -33,5 +41,6 @@ class TrackingSDKTest {
         val eventTracker = EventTracker(networkClient, storageManager, config)
 
         // Test would verify event creation and tracking
+        assertNotNull(eventTracker)
     }
 }

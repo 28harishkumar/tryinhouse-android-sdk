@@ -6,12 +6,12 @@ plugins {
     id("signing")
 }
 
-// Set properties from environment variables
-project.ext["ossrhUsername"] = System.getProperty("OSSRH_USERNAME") ?: ""
-project.ext["ossrhPassword"] = System.getProperty("OSSRH_PASSWORD") ?: ""
-project.ext["signingKeyId"] = System.getProperty("SIGNING_KEY_ID") ?: ""
-project.ext["signingPassword"] = System.getProperty("SIGNING_PASSWORD") ?: ""
-project.ext["signingSecretKeyRingFile"] = System.getProperty("SIGNING_SECRET_KEY_RING_FILE") ?: ""
+// Set properties from environment variables or system properties
+project.ext["ossrhUsername"] = System.getProperty("OSSRH_USERNAME") ?: System.getenv("OSSRH_USERNAME") ?: ""
+project.ext["ossrhPassword"] = System.getProperty("OSSRH_PASSWORD") ?: System.getenv("OSSRH_PASSWORD") ?: ""
+project.ext["signingKeyId"] = System.getProperty("SIGNING_KEY_ID") ?: System.getenv("SIGNING_KEY_ID") ?: ""
+project.ext["signingPassword"] = System.getProperty("SIGNING_PASSWORD") ?: System.getenv("SIGNING_PASSWORD") ?: ""
+project.ext["signingSecretKeyRingFile"] = System.getProperty("SIGNING_SECRET_KEY_RING_FILE") ?: System.getenv("SIGNING_SECRET_KEY_RING_FILE") ?: ""
 
 android {
     namespace = "co.tryinhouse.android"
@@ -77,29 +77,32 @@ val javadocJar by tasks.registering(Jar::class) {
     dependsOn(tasks.dokkaHtml)
 }
 
+// Create sources JAR
+val sourcesJar by tasks.registering(Jar::class) {
+    archiveClassifier.set("sources")
+    from(android.sourceSets.getByName("main").java.srcDirs)
+    exclude("**/build/**")
+}
+
 afterEvaluate {
     publishing {
         publications {
             create<MavenPublication>("release") {
                 from(components["release"])
-                artifact(javadocJar.get())
-                
+                // Do NOT manually add sourcesJar or javadocJar artifacts here!
                 groupId = "co.tryinhouse.android"
                 artifactId = "sdk"
                 version = "1.0.0"
-                
                 pom {
                     name.set("TryInhouse Android SDK")
                     description.set("Android SDK for tracking app installs, app opens, and user interactions with shortlinks")
                     url.set("https://github.com/28harishkumar/tryinhouse-android-sdk")
-                    
                     licenses {
                         license {
                             name.set("The Apache License, Version 2.0")
                             url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
                         }
                     }
-                    
                     developers {
                         developer {
                             id.set("focks-chandan")
@@ -107,43 +110,6 @@ afterEvaluate {
                             email.set("ck@tryinhouse.co")
                         }
                     }
-                    
-                    scm {
-                        connection.set("scm:git:git://github.com/28harishkumar/tryinhouse-android-sdk.git")
-                        developerConnection.set("scm:git:ssh://github.com:28harishkumar/tryinhouse-android-sdk.git")
-                        url.set("https://github.com/28harishkumar/tryinhouse-android-sdk/tree/master")
-                    }
-                }
-            }
-            
-            create<MavenPublication>("snapshot") {
-                from(components["release"])
-                artifact(javadocJar.get())
-                
-                groupId = "co.tryinhouse.android"
-                artifactId = "sdk"
-                version = "1.0.0-SNAPSHOT"
-                
-                pom {
-                    name.set("TryInhouse Android SDK")
-                    description.set("Android SDK for tracking app installs, app opens, and user interactions with shortlinks")
-                    url.set("https://github.com/28harishkumar/tryinhouse-android-sdk")
-                    
-                    licenses {
-                        license {
-                            name.set("The Apache License, Version 2.0")
-                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-                        }
-                    }
-                    
-                    developers {
-                        developer {
-                            id.set("focks-chandan")
-                            name.set("Chandan Singha")
-                            email.set("ck@tryinhouse.co")
-                        }
-                    }
-                    
                     scm {
                         connection.set("scm:git:git://github.com/28harishkumar/tryinhouse-android-sdk.git")
                         developerConnection.set("scm:git:ssh://github:28harishkumar/tryinhouse-android-sdk.git")
@@ -153,51 +119,61 @@ afterEvaluate {
             }
         }
         
+        // Configure repositories for direct Central Portal upload
         repositories {
             maven {
                 name = "OSSRH"
-                url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+                url = uri("https://central.sonatype.com/repository/maven-releases")
                 credentials {
-                    username = project.findProperty("ossrhUsername") as String?
-                    password = project.findProperty("ossrhPassword") as String?
+                    username = project.findProperty("OSSRH_USERNAME") as String?
+                    password = project.findProperty("OSSRH_PASSWORD") as String?
                 }
             }
             maven {
-                name = "OSSRH-Snapshots"
-                url = uri("https://oss.sonatype.org/content/repositories/snapshots/")
+                name = "OSSRHSnapshots"
+                url = uri("https://central.sonatype.com/repository/maven-snapshots")
                 credentials {
-                    username = project.findProperty("ossrhUsername") as String?
-                    password = project.findProperty("ossrhPassword") as String?
+                    username = project.findProperty("OSSRH_USERNAME") as String?
+                    password = project.findProperty("OSSRH_PASSWORD") as String?
                 }
             }
         }
     }
     
-    tasks.findByName("publishReleasePublicationToMavenLocal")?.let { publishTask ->
-        publishTask.dependsOn(tasks.named("releaseSourcesJar"))
-        publishTask.dependsOn(javadocJar)
-    }
-    tasks.findByName("generateMetadataFileForReleasePublication")?.let { metaTask ->
-        metaTask.dependsOn(tasks.named("releaseSourcesJar"))
-        metaTask.dependsOn(javadocJar)
+    // Fix task dependencies
+    tasks.named("generateMetadataFileForReleasePublication") {
+        dependsOn(sourcesJar)
     }
     
-    // Configure signing after publications are created
-    // Only enable signing for production releases
+    // Configure signing for the central-publishing plugin
     if (project.hasProperty("enableSigning") && project.property("enableSigning") == "true") {
-        signing {
-            val signingKeyId: String? by project
-            val signingPassword: String? by project
-            val signingSecretKeyRingFile: String? by project
-            
-            // Use the existing keyring file directly
-            if (signingSecretKeyRingFile != null && signingKeyId != null && signingPassword != null) {
-                useInMemoryPgpKeys(signingKeyId, signingSecretKeyRingFile, signingPassword)
-            } else if (signingKeyId != null && signingPassword != null) {
-                // Fallback to in-memory signing
-                useInMemoryPgpKeys(signingKeyId, signingPassword)
+        println("🔐 Signing configuration:")
+        val signingKeyId: String? by project
+        val signingPassword: String? by project
+        
+        println("   Key ID: ${signingKeyId ?: "NOT SET"}")
+        println("   Password: ${if (signingPassword != null) "SET" else "NOT SET"}")
+        println("   OSSRH_USERNAME: ${project.findProperty("OSSRH_USERNAME") ?: "NOT SET"}")
+        println("   OSSRH_PASSWORD: ${if (project.findProperty("OSSRH_PASSWORD") != null) "SET" else "NOT SET"}")
+        
+        if (signingKeyId != null) {
+            try {
+                println("   Using GPG agent for signing")
+                signing {
+                    useGpgCmd()
+                    // Configure signing to be more selective
+                    sign(configurations["archives"])
+                }
+                println("   ✅ GPG agent signing configured successfully")
+            } catch (e: Exception) {
+                println("   ❌ GPG agent signing failed: ${e.message}")
+                throw e
             }
-            sign(publishing.publications["release"])
+        } else {
+            println("⚠️  Warning: Signing credentials not found")
+            throw Exception("SIGNING_KEY_ID must be set in .env file")
         }
+    } else {
+        println("ℹ️  Signing disabled (use -PenableSigning=true to enable)")
     }
 }

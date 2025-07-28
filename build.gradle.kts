@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.android.library) apply false
+    alias(libs.plugins.central.publishing)
 }
 
 // Load environment variables from .env file
@@ -18,6 +19,18 @@ if (envFile.exists()) {
                 System.setProperty(key, value)
                 project.ext[key] = value
             }
+        }
+    }
+}
+
+// Configure nexus-publish plugin for modern Central Portal workflow
+nexusPublishing {
+    repositories {
+        sonatype {
+            nexusUrl.set(uri("https://oss.sonatype.org/"))
+            snapshotRepositoryUrl.set(uri("https://oss.sonatype.org/content/repositories/snapshots/"))
+            username.set(project.findProperty("OSSRH_USERNAME") as String?)
+            password.set(project.findProperty("OSSRH_PASSWORD") as String?)
         }
     }
 }

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script to publish TryInhouse Android SDK to Maven Central
-# This script handles GPG signing and publishing to OSSRH
+# This script handles GPG signing and publishing using the modern Central Portal workflow
 
 set -e
 
@@ -32,24 +32,27 @@ echo "✅ Environment variables loaded successfully"
 # Setup GPG signing
 echo "🔐 Setting up GPG signing..."
 
-# Copy the keyring file to a temporary location
-TEMP_KEYRING="/tmp/temp-keyring.gpg"
-cp "$SIGNING_SECRET_KEY_RING_FILE" "$TEMP_KEYRING"
-
-# Use the temporary keyring file
+# Export environment variables for Gradle
 export SIGNING_KEY_ID
 export SIGNING_PASSWORD
-export SIGNING_SECRET_KEY_RING_FILE="$TEMP_KEYRING"
+export SIGNING_SECRET_KEY_RING_FILE
+
+# Debug: Check if keyring file exists
+if [ -n "$SIGNING_SECRET_KEY_RING_FILE" ]; then
+    if [ -f "$SIGNING_SECRET_KEY_RING_FILE" ]; then
+        echo "✅ Keyring file exists: $SIGNING_SECRET_KEY_RING_FILE"
+    else
+        echo "⚠️  Warning: Keyring file not found: $SIGNING_SECRET_KEY_RING_FILE"
+    fi
+else
+    echo "ℹ️  No keyring file specified, will use in-memory signing"
+fi
 
 echo "✅ GPG signing configured"
 
-# Publish to Maven Central
+# Publish to Maven Central using direct Central Portal upload
 echo "📦 Publishing to Maven Central..."
-echo "⚠️  Note: Publishing without GPG signing due to key access issues"
 ./gradlew :client:publishReleasePublicationToOSSRHRepository -PenableSigning=true
-
-# Clean up temporary files
-rm -f "$TEMP_KEYRING"
 
 echo "✅ Publishing completed successfully!"
 echo "🎉 TryInhouse Android SDK has been published to Maven Central"
