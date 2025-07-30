@@ -27,8 +27,9 @@ if (envFile.exists()) {
 nexusPublishing {
     repositories {
         sonatype {
-            nexusUrl.set(uri("https://oss.sonatype.org/"))
-            snapshotRepositoryUrl.set(uri("https://oss.sonatype.org/content/repositories/snapshots/"))
+            // Use Central Portal URLs (modern workflow)
+            nexusUrl.set(uri("https://central.sonatype.com/"))
+            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
             username.set(project.findProperty("OSSRH_USERNAME") as String?)
             password.set(project.findProperty("OSSRH_PASSWORD") as String?)
         }

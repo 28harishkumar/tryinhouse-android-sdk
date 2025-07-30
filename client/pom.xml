@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>co.tryinhouse.android</groupId>
+    <artifactId>sdk</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <name>TryInhouse Android SDK</name>
+    <description>Android SDK for tracking app installs, app opens, and user interactions with shortlinks</description>
+    <url>https://github.com/28harishkumar/tryinhouse-android-sdk</url>
+
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>focks-chandan</id>
+            <name>Chandan Singha</name>
+            <email>ck@tryinhouse.co</email>
+            <organization>TryInhouse</organization>
+            <organizationUrl>https://tryinhouse.co</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/28harishkumar/tryinhouse-android-sdk.git</connection>
+        <developerConnection>scm:git:ssh://github:28harishkumar/tryinhouse-android-sdk.git</developerConnection>
+        <url>https://github.com/28harishkumar/tryinhouse-android-sdk/tree/master</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>ossrh</id>
+            <name>OSSRH Release Repository</name>
+            <url>https://central.sonatype.com/repository/maven-releases</url>
+        </repository>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <name>OSSRH Snapshot Repository</name>
+            <url>https://central.sonatype.com/repository/maven-snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <kotlin.version>1.8.21</kotlin.version>
+        <android.plugin.version>8.11.1</android.plugin.version>
+    </properties>
+
+    <dependencies>
+        <!-- Network Dependencies -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>4.12.0</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10.1</version>
+        </dependency>
+
+        <!-- Coroutines -->
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-coroutines-core</artifactId>
+            <version>1.6.4</version>
+        </dependency>
+
+        <!-- Test Dependencies -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.7.0</version>
+            <scope>test</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-coroutines-test</artifactId>
+            <version>1.6.4</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <sourceDirectory>src/main/java</sourceDirectory>
+        <testSourceDirectory>src/test/java</testSourceDirectory>
+        
+        <plugins>
+            <!-- Maven Compiler Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>11</source>
+                    <target>11</target>
+                </configuration>
+            </plugin>
+
+            <!-- Kotlin Maven Plugin -->
+            <plugin>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-maven-plugin</artifactId>
+                <version>${kotlin.version}</version>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>test-compile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>test-compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <jvmTarget>11</jvmTarget>
+                </configuration>
+            </plugin>
+
+            <!-- Source JAR Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Javadoc JAR Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.5.0</version>
+                <configuration>
+                    <source>11</source>
+                    <doclint>none</doclint>
+                    <failOnError>false</failOnError>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+
+
+        </plugins>
+    </build>
+
+
+</project> 

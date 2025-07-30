@@ -50,9 +50,9 @@ fi
 
 echo "✅ GPG signing configured"
 
-# Publish to Maven Central using direct Central Portal upload
+# Publish to Maven Central using modern Central Portal workflow
 echo "📦 Publishing to Maven Central..."
-./gradlew :client:publishReleasePublicationToOSSRHRepository -PenableSigning=true
+./gradlew :client:publishReleasePublicationToSonatypeRepository -PenableSigning=true
 
 echo "✅ Publishing completed successfully!"
 echo "🎉 TryInhouse Android SDK has been published to Maven Central"

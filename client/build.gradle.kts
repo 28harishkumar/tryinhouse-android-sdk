@@ -89,10 +89,14 @@ afterEvaluate {
         publications {
             create<MavenPublication>("release") {
                 from(components["release"])
-                // Do NOT manually add sourcesJar or javadocJar artifacts here!
+                
+                // Add javadoc JAR
+                artifact(javadocJar.get())
+                
                 groupId = "co.tryinhouse.android"
                 artifactId = "sdk"
                 version = "1.0.0"
+                
                 pom {
                     name.set("TryInhouse Android SDK")
                     description.set("Android SDK for tracking app installs, app opens, and user interactions with shortlinks")
@@ -119,11 +123,11 @@ afterEvaluate {
             }
         }
         
-        // Configure repositories for direct Central Portal upload
+        // Configure repositories for Central Portal upload
         repositories {
             maven {
                 name = "OSSRH"
-                url = uri("https://central.sonatype.com/repository/maven-releases")
+                url = uri("https://central.sonatype.com/repository/maven-staging")
                 credentials {
                     username = project.findProperty("OSSRH_USERNAME") as String?
                     password = project.findProperty("OSSRH_PASSWORD") as String?
@@ -140,12 +144,7 @@ afterEvaluate {
         }
     }
     
-    // Fix task dependencies
-    tasks.named("generateMetadataFileForReleasePublication") {
-        dependsOn(sourcesJar)
-    }
-    
-    // Configure signing for the central-publishing plugin
+    // Configure signing
     if (project.hasProperty("enableSigning") && project.property("enableSigning") == "true") {
         println("🔐 Signing configuration:")
         val signingKeyId: String? by project
@@ -161,8 +160,8 @@ afterEvaluate {
                 println("   Using GPG agent for signing")
                 signing {
                     useGpgCmd()
-                    // Configure signing to be more selective
-                    sign(configurations["archives"])
+                    // Sign all publications
+                    sign(publishing.publications)
                 }
                 println("   ✅ GPG agent signing configured successfully")
             } catch (e: Exception) {

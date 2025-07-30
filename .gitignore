@@ -23,3 +23,6 @@ local.properties
 *.asc
 secrets/
 .local
+*.tar.gz
+maven-central-archive
+client/target/
