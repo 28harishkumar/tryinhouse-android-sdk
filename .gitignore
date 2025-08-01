@@ -26,3 +26,5 @@ secrets/
 *.tar.gz
 maven-central-archive
 client/target/
+client-sdk-distribution/
+*.zip
