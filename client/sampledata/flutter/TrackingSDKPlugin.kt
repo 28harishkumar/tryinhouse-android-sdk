@@ -35,15 +35,15 @@ class TrackingSDKPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 val shortLinkDomain = call.argument<String>("shortLinkDomain")
                 val serverUrl = call.argument<String>("serverUrl")
                 val enableDebugLogging = call.argument<Boolean>("enableDebugLogging") ?: false
-                val projectId = call.argument<String>("projectId")
+                val tokenId = call.argument<String>("tokenId")
 
-                Log.d("TrackingSDKPlugin", "initialize called with projectId=$projectId, projectToken=$projectToken, shortLinkDomain=$shortLinkDomain, serverUrl=$serverUrl, enableDebugLogging=$enableDebugLogging")
+                Log.d("TrackingSDKPlugin", "initialize called with projectToken=$projectToken, tokenId=$tokenId, shortLinkDomain=$shortLinkDomain, serverUrl=$serverUrl, enableDebugLogging=$enableDebugLogging")
 
-                if (projectToken != null && shortLinkDomain != null && projectId != null) {
+                if (projectToken != null && shortLinkDomain != null && tokenId != null) {
                     TrackingSDK.getInstance().initialize(
                         context = context,
-                        projectId = projectId,
                         projectToken = projectToken,
+                        tokenId = tokenId,
                         shortLinkDomain = shortLinkDomain,
                         serverUrl = serverUrl ?: "https://your-api-server.com",
                         enableDebugLogging = enableDebugLogging

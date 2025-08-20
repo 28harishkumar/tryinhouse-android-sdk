@@ -35,23 +35,28 @@ class TrackingSDK private constructor() {
     }
 
     /**
+     * Expose application context for SDK internals that require it
+     */
+    fun getApplicationContext(): Context? = context
+
+    /**
      * Initialize the SDK with project token and shortlink domain
      * @param callback: (callbackType: String, jsonData: String) -> Unit
      */
     fun initialize(
         context: Context,
-        projectId: String,
         projectToken: String,
+        tokenId: String,
         shortLinkDomain: String,
-        serverUrl: String = "https://your-api-server.com",
+        serverUrl: String = "https://api.tryinhouse.co",
         enableDebugLogging: Boolean = false,
         callback: ((callbackType: String, jsonData: String) -> Unit)? = null
     ) {
-        Log.d("TrackingSDK", "initialize called with projectId=$projectId, projectToken=$projectToken, shortLinkDomain=$shortLinkDomain, serverUrl=$serverUrl, enableDebugLogging=$enableDebugLogging")
+        Log.d("TrackingSDK", "initialize called with projectToken=$projectToken, tokenId=$tokenId, shortLinkDomain=$shortLinkDomain, serverUrl=$serverUrl, enableDebugLogging=$enableDebugLogging")
         this.context = context.applicationContext
         this.config = SDKConfig(
-            projectId = projectId,
             projectToken = projectToken,
+            tokenId = tokenId,
             shortLinkDomain = shortLinkDomain,
             serverUrl = serverUrl,
             enableDebugLogging = enableDebugLogging
@@ -117,8 +122,8 @@ class TrackingSDK private constructor() {
             val shortLink = shortLinkDetector?.extractShortLink(installReferrer)
             if (shortLink != null) {
                 Log.d("TrackingSDK", "Shortlink extracted from install referrer: $shortLink")
-                // Track app install from shortlink and callback
-                trackAppInstallFromShortLink(shortLink) { responseJson ->
+                // Track app install from shortlink and callback, passing the full install referrer
+                trackAppInstallFromShortLink(shortLink, installReferrer) { responseJson ->
                     Log.d("TrackingSDK", "App install from shortlink callback triggered: $responseJson")
                     sdkCallback?.invoke("app_install_from_shortlink", responseJson)
                 }
@@ -134,7 +139,7 @@ class TrackingSDK private constructor() {
                     val shortLink = shortLinkDetector?.extractShortLink(referrer)
                     if (shortLink != null) {
                         Log.d("TrackingSDK", "Shortlink extracted from install referrer (async): $shortLink")
-                        trackAppInstallFromShortLink(shortLink) { responseJson ->
+                        trackAppInstallFromShortLink(shortLink, referrer) { responseJson ->
                             Log.d("TrackingSDK", "App install from shortlink callback triggered (async): $responseJson")
                             sdkCallback?.invoke("app_install_from_shortlink", responseJson)
                         }
@@ -190,9 +195,9 @@ class TrackingSDK private constructor() {
         }
     }
 
-    fun trackAppInstallFromShortLink(shortLink: String, callback: ((String) -> Unit)? = null) {
-        Log.d("TrackingSDK", "trackAppInstallFromShortLink called with shortLink=$shortLink")
-        eventTracker?.trackAppInstall(shortLink) { responseJson ->
+    fun trackAppInstallFromShortLink(shortLink: String, referrer: String? = null, callback: ((String) -> Unit)? = null) {
+        Log.d("TrackingSDK", "trackAppInstallFromShortLink called with shortLink=$shortLink, referrer=$referrer")
+        eventTracker?.trackAppInstall(shortLink, referrer) { responseJson ->
             Log.d("TrackingSDK", "trackAppInstallFromShortLink callback: $responseJson")
             callback?.invoke(responseJson)
         }

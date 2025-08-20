@@ -7,10 +7,6 @@ import androidx.annotation.Keep
 data class Event (
     @SerializedName("event_type")
     val eventType: String,
-    @SerializedName("project_id")
-    val projectId: String,
-    @SerializedName("project_token")
-    val projectToken: String,
     @SerializedName("shortlink")
     val shortLink: String? = null,
     @SerializedName("deep_link")
@@ -26,5 +22,7 @@ data class Event (
     @SerializedName("user_agent")
     val userAgent: String? = null,
     @SerializedName("ip_address")
-    val ipAddress: String? = null
+    val ipAddress: String? = null,
+    @SerializedName("referrer")
+    val referrer: String? = null
 )

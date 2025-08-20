@@ -68,6 +68,9 @@ dependencies {
     // Testing
     testImplementation("org.mockito:mockito-core:5.7.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+
+    // Thumbmark fingerprinting (via JitPack)
+    implementation("com.github.thumbmarkjs:thumbmark-android:1.0.+")
 }
 
 // Create Javadoc JAR from Dokka output
@@ -84,6 +87,51 @@ val sourcesJar by tasks.registering(Jar::class) {
     exclude("**/build/**")
 }
 
+// Task to create a zip package for Maven Central upload
+tasks.register<Zip>("packageMavenRelease") {
+    dependsOn("assembleRelease", "generatePomFileForReleasePublication")
+    
+    archiveBaseName.set("maven-release-package")
+    destinationDirectory.set(layout.buildDirectory.dir("dist"))
+    archiveVersion.set(project.version.toString())
+    
+    // Include POM file
+    from(layout.buildDirectory.dir("publications/release")) {
+        include("pom-default.xml")
+        rename { "pom.xml" }
+    }
+    
+    // Include AAR file
+    from(layout.buildDirectory.dir("outputs/aar")) {
+        include("*.aar")
+    }
+    
+    // Include JAR files (javadoc and sources)
+    from(layout.buildDirectory.dir("libs")) {
+        include("*.jar")
+    }
+    
+    // Include additional publication artifacts
+    from(layout.buildDirectory.dir("publications/release")) {
+        include("**/*.jar", "**/*.aar")
+    }
+    
+    // Include signing files if they exist
+    from(layout.buildDirectory.dir("publications/release")) {
+        include("**/*.asc")
+    }
+    
+    doLast {
+        println("📦 Maven Central package created at: ${archiveFile.get()}")
+        println("📋 Package contents:")
+        fileTree(archiveFile.get().asFile.parentFile) {
+            include("**/*")
+        }.forEach { file ->
+            println("   - ${file.name}")
+        }
+    }
+}
+
 afterEvaluate {
     publishing {
         publications {
@@ -92,6 +140,14 @@ afterEvaluate {
                 
                 // Add javadoc JAR
                 artifact(javadocJar.get())
+                
+                // Add sources JAR
+                artifact(sourcesJar.get())
+                
+                // Ensure proper dependencies
+                tasks.named("generateMetadataFileForReleasePublication").configure {
+                    dependsOn(javadocJar, sourcesJar)
+                }
                 
                 groupId = "co.tryinhouse.android"
                 artifactId = "sdk"
@@ -126,16 +182,10 @@ afterEvaluate {
         // Configure repositories for Central Portal upload
         repositories {
             maven {
-                name = "OSSRH"
-                url = uri("https://central.sonatype.com/repository/maven-staging")
-                credentials {
-                    username = project.findProperty("OSSRH_USERNAME") as String?
-                    password = project.findProperty("OSSRH_PASSWORD") as String?
-                }
-            }
-            maven {
-                name = "OSSRHSnapshots"
-                url = uri("https://central.sonatype.com/repository/maven-snapshots")
+                val releasesRepoUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+                val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+                url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
+                
                 credentials {
                     username = project.findProperty("OSSRH_USERNAME") as String?
                     password = project.findProperty("OSSRH_PASSWORD") as String?
@@ -163,6 +213,12 @@ afterEvaluate {
                     // Sign all publications
                     sign(publishing.publications)
                 }
+                
+                // Configure signing task dependencies after signing is set up
+                tasks.matching { it.name.startsWith("sign") && it.name.endsWith("Publication") }.configureEach {
+                    dependsOn(javadocJar, sourcesJar)
+                }
+                
                 println("   ✅ GPG agent signing configured successfully")
             } catch (e: Exception) {
                 println("   ❌ GPG agent signing failed: ${e.message}")

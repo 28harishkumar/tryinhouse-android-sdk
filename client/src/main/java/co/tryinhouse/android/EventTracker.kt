@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import com.thumbmarkjs.thumbmark_android.Thumbmark
 
 class EventTracker(
     private val networkClient: NetworkClient,
@@ -22,7 +23,7 @@ class EventTracker(
         coroutineScope.launch {
             val event = createEvent(eventType, shortLink)
             Log.d("TrackingSDK", "Event created: $event")
-            sendEvent(event) { responseJson ->
+            sendEvent(event, shortLink) { responseJson ->
                 Log.d("TrackingSDK", "trackEvent callback: $responseJson")
                 callback?.invoke(responseJson)
             }
@@ -34,15 +35,15 @@ class EventTracker(
         coroutineScope.launch {
             val event = createEvent("short_link_click", shortLink, deepLink)
             Log.d("TrackingSDK", "Event created: $event")
-            sendEvent(event) { responseJson ->
+            sendEvent(event, shortLink) { responseJson ->
                 Log.d("TrackingSDK", "trackShortLinkClick callback: $responseJson")
                 callback?.invoke(responseJson)
             }
         }
     }
 
-    fun trackAppInstall(shortLink: String, callback: ((String) -> Unit)? = null) {
-        Log.d("TrackingSDK", "trackAppInstall called with shortLink=$shortLink")
+    fun trackAppInstall(shortLink: String, referrer: String? = null, callback: ((String) -> Unit)? = null) {
+        Log.d("TrackingSDK", "trackAppInstall called with shortLink=$shortLink, referrer=$referrer")
         coroutineScope.launch {
             try {
                 // First, get key-value pairs from server
@@ -53,9 +54,9 @@ class EventTracker(
                 storageManager.storeInstallData(InstallData(shortLink, installData))
 
                 // Track install event
-                val event = createEvent("app_install", shortLink, additionalData = installData)
+                val event = createEvent("app_install", shortLink, additionalData = installData, referrer = referrer)
                 Log.d("TrackingSDK", "Event created: $event")
-                sendEvent(event) { responseJson ->
+                sendEvent(event, shortLink) { responseJson ->
                     Log.d("TrackingSDK", "trackAppInstall callback: $responseJson")
                     callback?.invoke(responseJson)
                 }
@@ -74,7 +75,7 @@ class EventTracker(
         coroutineScope.launch {
             val event = createEvent(eventType, shortLink, additionalData = additionalData)
             Log.d("TrackingSDK", "Event created: $event")
-            sendEvent(event) { responseJson ->
+            sendEvent(event, shortLink) { responseJson ->
                 Log.d("TrackingSDK", "trackCustomEvent callback: $responseJson")
                 callback?.invoke(responseJson)
             }
@@ -85,9 +86,10 @@ class EventTracker(
         eventType: String,
         shortLink: String? = null,
         deepLink: String? = null,
-        additionalData: Map<String, String>? = null
+        additionalData: Map<String, String>? = null,
+        referrer: String? = null
     ): Event {
-        Log.d("TrackingSDK", "createEvent called with eventType=$eventType, shortLink=$shortLink, deepLink=$deepLink, additionalData=$additionalData")
+        Log.d("TrackingSDK", "createEvent called with eventType=$eventType, shortLink=$shortLink, deepLink=$deepLink, additionalData=$additionalData, referrer=$referrer")
         val extra = mutableMapOf<String, Any>()
 
         // Device info
@@ -134,29 +136,49 @@ class EventTracker(
         extra["do_not_track"] = ""
         extra["path"] = ""
 
+        // Thumbmark fingerprinting
+        try {
+            val ctx = TrackingSDK.getInstance().getApplicationContext()
+            if (ctx != null) {
+                // Default SHA-256 id
+                val id = Thumbmark.id(ctx)
+                if (!id.isNullOrEmpty()) {
+                    extra["thumbmark_id_sha256"] = id
+                }
+                // Full fingerprint
+                val fingerprint = Thumbmark.fingerprint(ctx)
+                fingerprint?.let {
+                    val gson = com.google.gson.Gson()
+                    val json = gson.toJson(it)
+                    extra["thumbmark_fingerprint_json"] = json
+                }
+            }
+        } catch (e: Throwable) {
+            Log.w("TrackingSDK", "Thumbmark integration failed: ${e.message}")
+        }
+
         // Merge in any additionalData
         additionalData?.let { extra.putAll(it) }
 
         val event = Event(
             eventType = eventType,
-            projectId = config.projectId,
-            projectToken = config.projectToken,
             shortLink = shortLink,
             deepLink = deepLink,
             deviceId = getDeviceId(),
             sessionId = TrackingSDK.getInstance().getSessionId(),
             extra = extra,
             userAgent = getUserAgent(),
-            ipAddress = getIPAddress()
+            ipAddress = getIPAddress(),
+            referrer = referrer
         )
         Log.d("TrackingSDK", "Event created: $event")
         return event
     }
 
-    private suspend fun sendEvent(event: Event, callback: ((String) -> Unit)? = null) {
+    private suspend fun sendEvent(event: Event, shortLink: String?, callback: ((String) -> Unit)? = null) {
         try {
             Log.d("TrackingSDK", "sendEvent called with event: $event")
-            val responseJson = networkClient.sendEvent(event)
+            val responseJson = networkClient.sendEvent(event, shortLink)
             if (config.enableDebugLogging) {
                 Log.d("TrackingSDK", "Event sent: ${event.eventType}")
             }
