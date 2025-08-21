@@ -70,6 +70,27 @@ class EventTracker(
         }
     }
 
+    fun trackAppInstallReferrerOnly(referrer: String, callback: ((String) -> Unit)? = null) {
+        Log.d("TrackingSDK", "trackAppInstallReferrerOnly called with referrer=$referrer")
+        coroutineScope.launch {
+            try {
+                // Track install event with referrer only, no shortlink extraction
+                val event = createEvent("app_install", shortLink = null, additionalData = null, referrer = referrer)
+                Log.d("TrackingSDK", "Event created: $event")
+                sendEvent(event, null) { responseJson ->
+                    Log.d("TrackingSDK", "trackAppInstallReferrerOnly callback: $responseJson")
+                    callback?.invoke(responseJson)
+                }
+
+                if (config.enableDebugLogging) {
+                    Log.d("TrackingSDK", "App install tracked with referrer only: $referrer")
+                }
+            } catch (e: Exception) {
+                Log.e("TrackingSDK", "Error tracking app install with referrer", e)
+            }
+        }
+    }
+
     fun trackCustomEvent(eventType: String, shortLink: String?, additionalData: Map<String, String>?, callback: ((String) -> Unit)? = null) {
         Log.d("TrackingSDK", "trackCustomEvent called with eventType=$eventType, shortLink=$shortLink, additionalData=$additionalData")
         coroutineScope.launch {

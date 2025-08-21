@@ -373,15 +373,28 @@ EOF
 
 print_success "Created integration test helper"
 
+# Create distribution zip
+print_step "Creating distribution ZIP archive..."
+DIST_ZIP="$PROJECT_ROOT/client-sdk-distribution.zip"
+cd "$(dirname "$DIST_DIR")"
+zip -r "$(basename "$DIST_ZIP")" "$(basename "$DIST_DIR")"
+print_success "Created distribution ZIP: $(basename "$DIST_ZIP")"
+
+# Calculate zip size
+ZIP_SIZE=$(du -sh "$DIST_ZIP" | cut -f1)
+
 echo ""
 print_success "🎉 Build and distribution packaging completed successfully!"
 echo ""
-echo "📦 Your SDK distribution is ready at: $DIST_DIR"
+echo "📦 Your SDK distribution is ready:"
+echo "  Directory: $DIST_DIR"
+echo "  ZIP Archive: $DIST_ZIP (Size: $ZIP_SIZE)"
 echo ""
 echo "Next steps:"
-echo "1. Copy the client-release.aar to your app's libs directory"
-echo "2. Add the dependencies from README.md to your app's build.gradle"
-echo "3. Follow the integration guide in README.md"
-echo "4. Use test-integration.gradle as a reference for dependencies"
+echo "1. Share the ZIP file: client-sdk-distribution.zip"
+echo "2. Extract and copy client-release.aar to your app's libs directory"
+echo "3. Add the dependencies from README.md to your app's build.gradle"
+echo "4. Follow the integration guide in README.md"
+echo "5. Use test-integration.gradle as a reference for dependencies"
 echo ""
 print_success "Happy coding! 🚀" 

@@ -119,16 +119,11 @@ class TrackingSDK private constructor() {
 
         if (installReferrer != null) {
             Log.d("TrackingSDK", "Install referrer found: $installReferrer")
-            val shortLink = shortLinkDetector?.extractShortLink(installReferrer)
-            if (shortLink != null) {
-                Log.d("TrackingSDK", "Shortlink extracted from install referrer: $shortLink")
-                // Track app install from shortlink and callback, passing the full install referrer
-                trackAppInstallFromShortLink(shortLink, installReferrer) { responseJson ->
-                    Log.d("TrackingSDK", "App install from shortlink callback triggered: $responseJson")
-                    sdkCallback?.invoke("app_install_from_shortlink", responseJson)
-                }
-            } else {
-                Log.d("TrackingSDK", "No shortlink found in install referrer")
+            // Send referrer directly to server without extracting shortlink
+            Log.d("TrackingSDK", "Sending install referrer directly to server without shortlink extraction")
+            trackAppInstallFromReferrer(installReferrer) { responseJson ->
+                Log.d("TrackingSDK", "App install from referrer callback triggered: $responseJson")
+                sdkCallback?.invoke("app_install_from_shortlink", responseJson)
             }
             storage.setFirstInstallComplete()
         } else {
@@ -136,15 +131,11 @@ class TrackingSDK private constructor() {
             fetchInstallReferrer { referrer ->
                 if (referrer != null) {
                     Log.d("TrackingSDK", "Install referrer fetched async: $referrer")
-                    val shortLink = shortLinkDetector?.extractShortLink(referrer)
-                    if (shortLink != null) {
-                        Log.d("TrackingSDK", "Shortlink extracted from install referrer (async): $shortLink")
-                        trackAppInstallFromShortLink(shortLink, referrer) { responseJson ->
-                            Log.d("TrackingSDK", "App install from shortlink callback triggered (async): $responseJson")
-                            sdkCallback?.invoke("app_install_from_shortlink", responseJson)
-                        }
-                    } else {
-                        Log.d("TrackingSDK", "No shortlink found in install referrer (async)")
+                    // Send referrer directly to server without extracting shortlink
+                    Log.d("TrackingSDK", "Sending install referrer directly to server without shortlink extraction (async)")
+                    trackAppInstallFromReferrer(referrer) { responseJson ->
+                        Log.d("TrackingSDK", "App install from referrer callback triggered (async): $responseJson")
+                        sdkCallback?.invoke("app_install_from_shortlink", responseJson)
                     }
                 } else {
                     Log.d("TrackingSDK", "No install referrer available after async fetch")
@@ -199,6 +190,14 @@ class TrackingSDK private constructor() {
         Log.d("TrackingSDK", "trackAppInstallFromShortLink called with shortLink=$shortLink, referrer=$referrer")
         eventTracker?.trackAppInstall(shortLink, referrer) { responseJson ->
             Log.d("TrackingSDK", "trackAppInstallFromShortLink callback: $responseJson")
+            callback?.invoke(responseJson)
+        }
+    }
+
+    fun trackAppInstallFromReferrer(referrer: String, callback: ((String) -> Unit)? = null) {
+        Log.d("TrackingSDK", "trackAppInstallFromReferrer called with referrer=$referrer")
+        eventTracker?.trackAppInstallReferrerOnly(referrer) { responseJson ->
+            Log.d("TrackingSDK", "trackAppInstallFromReferrer callback: $responseJson")
             callback?.invoke(responseJson)
         }
     }
